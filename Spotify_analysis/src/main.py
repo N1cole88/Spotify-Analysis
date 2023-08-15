@@ -29,32 +29,49 @@ def get_token(client_id, client_secret, code):
     result = post(url, headers=headers, data=data)
     json_result = json.loads(result.content)
     token = json_result["access_token"]
-    return token
+    refresh_token = json_result["refresh_token"]
+    return token, refresh_token
 
 def main():
     load_dotenv()
     client_id = os.getenv("CLIENT_ID")
     client_secret = os.getenv("CLIENT_SECRET")
-    playlist_id = os.getenv("MY_PLAYLIST_ID")
+    #playlist_id = os.getenv("MY_PLAYLIST_ID")
+    playlist_id = "5Dww7ikBY4JDVUe5Csdpm8"
 
     auth_headers = {
         "client_id": client_id,
         "response_type": "code",
         "redirect_uri": "http://localhost:7777/callback",
-        "scope": "user-library-read user-library-modify user-read-private user-read-email playlist-read-private"
+        "scope": "user-library-read user-library-modify user-read-private user-read-email playlist-read-private playlist-modify-public playlist-modify-private user-top-read user-read-recently-played user-read-currently-playing user-modify-playback-state user-modify-playback-state"
     }
 
     webbrowser.open("https://accounts.spotify.com/authorize?" + urlencode(auth_headers))
-    code = "AQC8SUoBNkrkRM8Khj3wK8JfYAa5dhN5NOlBv8VtJnwVbViiL5kCyQvkv5CXcX3v1zkiRhRgZPnRTwB-S5IbuDyN8Nj9Nj8r1ASSHROD84LSL2d9H2XUm1LpYoelM4YjM9MVeBy63D15zbgeB3iMn6AKf_fGAPNL6c4u2C-f6X6mgqKiEXB1EE6A-ZHeped9oX3An2_Pv88IeH5Y5nzcO5uQVvE_MYzl462g5VPok63fROJ4HzZvq4uWVAMn45_QzpO4Nanwg3fBQdS_2genAG9GgB6RnqCJQ7SGerAW4CKpsaJfHQ"
+    code = input("Please insert the authentication code: \n")
 
-    token = get_token(client_id, client_secret, code)
-    spotifyInteract = Spotify(client_id, client_secret, token)
+    token, refresh_token = get_token(client_id, client_secret, code)
+    spotifyInteract = Spotify(client_id, client_secret, token, refresh_token)
     result = spotifyInteract.search_for_artist("Justin")
     print("Found: ", result["name"])
+    track_searched = spotifyInteract.search_for_track("Ghost", 2)
+    print("Found track:", track_searched[1]["name"], "By", track_searched[1]["artists"][0]["name"], "URI:", track_searched[1]["uri"] )
+    print("User's 15 top tracks: ")
+    tt = spotifyInteract.get_user_top_tracks(3, 0)
+    t = spotifyInteract.getRecentTracks(15)
+    for idx, item in enumerate(tt):
+        print(idx + 1, ".", item["name"])
+    
+    #spotifyInteract.add_items_to_playlist_by_name(playlist_id, ["Baby", "LADY"])
 
-    df = spotifyInteract.getDefaultDataframe()
-    sq = Database("first_db", df)
-    sq.insert()
+    #df = spotifyInteract.getDefaultDataframe()
+    #sq = Database("second_db", df)
+    #sq.insert()
+    t = spotifyInteract.getRecentTracks(15)
+    for idx, item in enumerate(t):
+        print(idx + 1, ".", item["track"]["name"])
+    r = spotifyInteract.get_current_playing_track()
+    print(r["name"])
 
+    spotifyInteract.skip_to_prev()
     
 main()

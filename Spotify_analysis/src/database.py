@@ -91,8 +91,8 @@ class Database:
             # print("Total rows are:  ", len(records))
         except sqlite3.Error as error:
             print("Failed to read data from sqlite table", error)
-        return records
         self.close()
+        return records
 
     def close(self):
         self.sqliteConnection.close()
